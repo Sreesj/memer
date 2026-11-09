@@ -1,5 +1,6 @@
 import { FilesetResolver, FaceLandmarker, HandLandmarker } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs";
-import { LEVELS, VERDICTS, RANKS } from "./levels.js";
+import { LEVELS, ROUNDS, VERDICTS, RANKS } from "./levels.js";
+import { GIPHY_API_KEY } from "./config.js";
 
 const WASM = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm";
 const FACE_MODEL = "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
@@ -17,6 +18,7 @@ const octx = overlay.getContext("2d");
 const S = {
   face: null, hand: null,
   level: 0,
+  run: [],                // the levels picked for this game
   results: [],            // {score, pose, emo, checks, shot}
   live: { pose: 0, emo: 0 },
   capture: null,          // {start, best, bestScore}
@@ -33,7 +35,7 @@ function show(id) {
 
 function updateHud() {
   const total = S.results.reduce((a, r) => a + (r?.score || 0), 0);
-  $("#hudLevel").textContent = `LVL ${Math.min(S.level + 1, LEVELS.length)}/${LEVELS.length}`;
+  $("#hudLevel").textContent = `LVL ${Math.min(S.level + 1, S.run.length)}/${S.run.length}`;
   $("#hudScore").textContent = `${total} PTS`;
 }
 
@@ -41,6 +43,7 @@ function updateHud() {
 const BEST_KEY = "meme-mirror-best";
 function readBest() { try { return +localStorage.getItem(BEST_KEY) || 0; } catch { return 0; } }
 function writeBest(v) { try { localStorage.setItem(BEST_KEY, String(v)); } catch {} }
+$("#poolSize").textContent = LEVELS.length;
 if (readBest()) $("#bestEver").textContent = `Your best: ${readBest()} / 500`;
 
 $("#btnStart").addEventListener("click", async () => {
@@ -85,17 +88,72 @@ async function initVision(onStatus) {
 function startGame() {
   S.level = 0;
   S.results = [];
+  S.run = shuffle(LEVELS).slice(0, ROUNDS);
+  for (const L of S.run) prepareLevel(L); // fetch still frames in the background
   loadLevel();
 }
 
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+
+/* ───────────── GIPHY ───────────── */
+const giphyMedia = id => `https://media.giphy.com/media/${id}/giphy.gif`;
+const giphyPage = id => `https://giphy.com/gifs/${id}`;
+let giphyLookup = null;
+
+// With an API key, look every GIF up through the official API (and use the URLs it returns).
+function lookupGiphy() {
+  if (!GIPHY_API_KEY) return Promise.resolve({});
+  const ids = LEVELS.filter(l => l.giphy).map(l => l.giphy).join(",");
+  giphyLookup ||= fetch(`https://api.giphy.com/v1/gifs?ids=${ids}&api_key=${encodeURIComponent(GIPHY_API_KEY)}`)
+    .then(r => (r.ok ? r.json() : Promise.reject(r.status)))
+    .then(j => Object.fromEntries((j.data || []).map(d => [d.id, { gif: d.images?.original?.url, page: d.url }])))
+    .catch(e => { console.warn("GIPHY API lookup failed, using direct links", e); return {}; });
+  return giphyLookup;
+}
+
+// Fills in L.gif (what the card plays), L.img (the still pose) and L.credit. Safe to call repeatedly.
+function prepareLevel(L) {
+  if (!L.giphy) return Promise.resolve(L);
+  L.gif ||= giphyMedia(L.giphy);
+  L.credit ||= { text: "GIF via GIPHY", href: giphyPage(L.giphy) };
+  L.ready ||= lookupGiphy().then(async found => {
+    const hit = found[L.giphy];
+    if (hit?.gif) { L.gif = hit.gif; L.credit.href = hit.page || L.credit.href; }
+    L.img = await stillFrame(L.gif, L.frame ?? 0.5).catch(() => L.gif);
+    return L;
+  });
+  return L.ready;
+}
+
+// Grab one frame of a GIF as a JPEG data URL (ImageDecoder: Chrome, Edge, newer Firefox).
+// Elsewhere the GIF itself is used, and canvases draw its first frame.
+async function stillFrame(url, at) {
+  if (!("ImageDecoder" in window)) return url;
+  const res = await fetch(url, { mode: "cors" });
+  const dec = new ImageDecoder({ data: res.body, type: "image/gif" });
+  await dec.completed;
+  const n = dec.tracks.selectedTrack.frameCount;
+  const { image } = await dec.decode({ frameIndex: Math.min(n - 1, Math.round(at * (n - 1))) });
+  const c = document.createElement("canvas");
+  c.width = image.displayWidth; c.height = image.displayHeight;
+  c.getContext("2d").drawImage(image, 0, 0);
+  image.close(); dec.close();
+  return c.toDataURL("image/jpeg", 0.88);
+}
+
 function loadLevel() {
-  const L = LEVELS[S.level];
+  const L = S.run[S.level];
+  prepareLevel(L);
   $("#refImg").src = L.gif || L.img;
   const credit = $("#refCredit");
   credit.hidden = !L.credit;
   if (L.credit) { credit.textContent = L.credit.text; credit.href = L.credit.href; }
   $("#refNum").textContent = `LEVEL ${S.level + 1}`;
-  $("#refDots").textContent = LEVELS.map((_, i) => (i < S.level ? "●" : i === S.level ? "◉" : "○")).join("");
+  $("#refDots").textContent = S.run.map((_, i) => (i < S.level ? "●" : i === S.level ? "◉" : "○")).join("");
   $("#refName").textContent = L.name;
   $("#refTag").textContent = L.tagline;
   $("#refTips").replaceChildren(...L.tips.map(t => Object.assign(document.createElement("li"), { textContent: t })));
@@ -138,6 +196,21 @@ function helpers(f) {
       }
       return best;
     },
+    // two different hands, one near each side; 1 = both sides covered
+    twoHands(handIdx, sideA, sideB, good, bad) {
+      const [A, B] = f.hands;
+      if (!A) return 0;
+      const n = (side, hand) => this.near(this.handTo(handIdx, side, hand), good, bad);
+      if (!B) return 0.5 * Math.max(n(sideA, A), n(sideB, A));
+      return Math.max(n(sideA, A) + n(sideB, B), n(sideB, A) + n(sideA, B)) / 2;
+    },
+    // share of visible hands whose palm is above the given face point (eyes ≈ 159)
+    handsAbove(faceIdx) {
+      if (!f.hands.length) return 0;
+      const y = F[faceIdx].y;
+      return f.hands.filter(h => palmOf(h).y < y).length / Math.max(2, f.hands.length);
+    },
+    faceSize: () => fw / (f.W || 1),
     sideEye: () => Math.max(
       (bs("eyeLookOutLeft") + bs("eyeLookInRight")) / 2,
       (bs("eyeLookOutRight") + bs("eyeLookInLeft")) / 2),
@@ -201,8 +274,8 @@ function tick() {
     occluded = true;
   }
   const hands = (hr.landmarks || []).map(h => h.map(p => ({ x: p.x * W, y: p.y * H })));
-  const frame = { face, bs, hands, occluded };
-  const res = scoreFrame(LEVELS[S.level], frame);
+  const frame = { face, bs, hands, occluded, W, H };
+  const res = scoreFrame(S.run[S.level], frame);
 
   // live meters (smoothed)
   const k = 0.25;
@@ -293,8 +366,9 @@ function runCapture(now, res) {
 /* ───────────── result ───────────── */
 function verdictFor(score) { return VERDICTS.find(([min]) => score >= min)[1]; }
 
-function showResult() {
-  const L = LEVELS[S.level], r = S.results[S.level];
+async function showResult() {
+  const L = S.run[S.level], r = S.results[S.level];
+  await prepareLevel(L);
   $("#resRef").src = L.img;
   $("#resYou").src = r.shot;
   $("#resQuip").textContent = r.noFace ? "We couldn't see a face. The meme requires a face." : verdictFor(r.score);
@@ -318,7 +392,7 @@ function showResult() {
     li.append(label, track, n);
     return li;
   }));
-  $("#btnNext").textContent = S.level === LEVELS.length - 1 ? "See final score" : "Next meme";
+  $("#btnNext").textContent = S.level === S.run.length - 1 ? "See final score" : "Next meme";
   updateHud();
   show("screenResult");
   countUp($("#resScore"), r.score, 700);
@@ -355,6 +429,7 @@ const loadImg = src => new Promise(res => {
 });
 
 async function drawCollage(total) {
+  await Promise.all(S.run.map(prepareLevel));
   try { await document.fonts.ready; } catch {}
   const cv = $("#collage"), c = cv.getContext("2d");
   const W = cv.width, H = cv.height;
@@ -371,17 +446,19 @@ async function drawCollage(total) {
   c.textAlign = "left";
 
   const rowH = 236, top = 160, size = 200;
-  for (let i = 0; i < LEVELS.length; i++) {
+  for (let i = 0; i < S.run.length; i++) {
     const y = top + i * rowH, r = S.results[i];
-    const [ref, you] = await Promise.all([loadImg(LEVELS[i].img), r?.shot ? loadImg(r.shot) : null]);
+    const [ref, you] = await Promise.all([loadImg(S.run[i].img), r?.shot ? loadImg(r.shot) : null]);
     roundImg(c, ref, 60, y, size);
     roundImg(c, you, 60 + size + 24, y, size);
     c.fillStyle = "#c9b8e6";
     c.font = "800 26px 'JetBrains Mono', monospace";
     c.fillText(`LEVEL ${i + 1}`, 520, y + 50);
     c.fillStyle = "#fff4e0";
-    c.font = "40px 'Bowlby One', Impact, sans-serif";
-    c.fillText(LEVELS[i].name.toUpperCase().slice(0, 18), 520, y + 105);
+    const title = S.run[i].name.toUpperCase();
+    let px = 40;
+    do { c.font = `${px}px 'Bowlby One', Impact, sans-serif`; } while (c.measureText(title).width > W - 580 && --px > 18);
+    c.fillText(title, 520, y + 105);
     c.fillStyle = r ? "#ff4d2e" : "#c9b8e6";
     c.font = "800 64px 'JetBrains Mono', monospace";
     c.fillText(r ? String(r.score) : "—", 520, y + 180);
@@ -426,6 +503,6 @@ document.addEventListener("keydown", e => {
 });
 
 function next() {
-  if (S.level < LEVELS.length - 1) { S.level++; loadLevel(); }
+  if (S.level < S.run.length - 1) { S.level++; loadLevel(); }
   else showFinal();
 }

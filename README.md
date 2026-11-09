@@ -11,13 +11,21 @@ At the end you get a total out of 500, a rank, and a downloadable side-by-side c
 
 ## Levels
 
-| # | Meme | What it checks |
-|---|------|----------------|
-| 1 | The Hmm Monkey | hand on chin, pursed lips, suspicious eyes, no smile |
-| 2 | The Side-Eye | head forward, eyes to one side, pressed lips, judgy brows |
-| 3 | Internal Screaming (Home Alone GIF) | both palms on cheeks, jaw wide open, brows up, eyes wide |
-| 4 | Big Brain Smirk (temple-tap GIF) | finger on temple, head tilt, smug smirk, squint |
-| 5 | Facepalm of Shame | palm over forehead, eyes closed, defeated mouth |
+There are 11 memes in the pool, and each game picks 5 at random (`ROUNDS` in `levels.js`).
+
+| Meme | Source | What it checks |
+|------|--------|----------------|
+| The Hmm Monkey | local image | hand on chin, pursed lips, suspicious eyes, no smile |
+| The Side-Eye | original cartoon | head forward, eyes to one side, pressed lips, judgy brows |
+| Internal Screaming | GIPHY (Home Alone) | both palms on cheeks, jaw wide open, brows up, eyes wide |
+| Big Brain Temple Tap | GIPHY | finger on temple, head tilt, smug smirk, squint |
+| Captain's Facepalm | GIPHY (Star Trek) | both hands over face, eyes closed, defeated mouth |
+| Confused Nick Young | GIPHY | head tilt, baffled grin, brows up |
+| Kombucha Disgust | GIPHY | nose wrinkle, squeezed eyes, twisted mouth |
+| Wait, What? Blink | GIPHY | head turned, brows lifted, mouth shut |
+| Mind Blown | GIPHY (Tim and Eric) | hands up beside head, jaw dropped, eyes wide |
+| Here's Johnny | GIPHY (The Shining) | face close to camera, head tilt, unhinged grin, wild eyes |
+| NO. GOD. PLEASE. NO. | GIPHY (The Office) | head thrown sideways, full scream, eyes shut |
 
 ## Run it
 
@@ -44,49 +52,23 @@ Each level in `levels.js` is a list of checks. A check is a small function that 
 
 Pose and emotion are weighted averages of their checks; the level score is 50/50 of the two.
 
-## Stored GIFs
+## GIFs come from GIPHY (nothing copyrighted is stored here)
 
-`assets/gifs/` holds downloaded GIFs plus one still frame from each. The level card plays the GIF; scoring compares against the still pose, and the share card uses the still.
+GIF levels are linked from GIPHY, not copied into this repo. Each card credits and links its GIPHY page, and the site shows "Powered by GIPHY".
 
-| File | Source |
-|------|--------|
-| `home-alone-scream.gif` | [GIPHY d2YWTOsVtuHgOHhC](https://giphy.com/gifs/homealone-90s-home-alone-d2YWTOsVtuHgOHhC) |
-| `temple-tap.gif` | [GIPHY LqghYqYPnGt65WpMI1](https://giphy.com/gifs/draftkings-roll-safe-you-see-tapping-head-LqghYqYPnGt65WpMI1) |
+- **API key:** put a free key from [developers.giphy.com](https://developers.giphy.com/dashboard/) in `config.js`. The game then looks GIFs up through the official API, which GIPHY's terms expect for apps. Without a key it falls back to GIPHY's direct media links, which is fine for testing.
+- **The pose frame:** `frame: 0.76` means "the pose is 76% of the way through the GIF". The game pulls that frame in the browser (via `ImageDecoder`) for the result screen and the share card. Browsers without `ImageDecoder` (Safari) use the GIF's first frame there instead.
+- **Rights:** the clips belong to their rights holders. GIPHY is the licensed route for showing them; if a rights holder asks for one to be removed, delete that level.
 
-These clips belong to their rights holders. Fine for a private repo or playing with friends; think twice before publishing them on a public site.
-
-To add a stored GIF to a level, set `gif:` (what the card plays) and `img:` (the still frame used for scoring):
-
-```js
-img: "assets/gifs/my-meme-still.jpg",
-gif: "assets/gifs/my-meme.gif",
-```
-
-## Use existing GIFs from GIPHY
-
-Find the meme on giphy.com, copy its page URL, and use the `giphy()` helper in `levels.js`:
-
-```js
-{
-  ...giphy("https://giphy.com/gifs/whatever-it-is-AbC123xyz"),   // or just the ID
-  id: "sideeye",
-  name: "The Side-Eye",
-  // tips, checks… as usual
-},
-```
-
-This loads the GIF from GIPHY's servers (nothing is copied into the repo) and shows a "via GIPHY" link on the card. Pass `{ still: true }` to use GIPHY's frozen first frame instead of the animation.
-
-## Add your own memes
-
-Drop an image or GIF into `assets/` and add an entry to `LEVELS` in `levels.js`:
+To add a GIPHY meme, copy the ID from the end of its giphy.com URL:
 
 ```js
 {
   id: "mine",
   name: "My Unhinged Meme",
   tagline: "When the wifi drops mid-ranked match.",
-  img: "assets/my-meme.gif",
+  giphy: "AbC123xyz",   // from https://giphy.com/gifs/some-name-AbC123xyz
+  frame: 0.6,           // where in the GIF the pose is
   tips: ["Both hands on head", "Mouth open"],
   checks: [
     { kind: "pose", label: "Hands on head", w: 3, fn: h => h.near(h.handTo(["palm"], [10]), 0.3, 0.8) },
@@ -95,4 +77,6 @@ Drop an image or GIF into `assets/` and add an entry to `LEVELS` in `levels.js`:
 },
 ```
 
-Only use images you have the rights to share if you publish the site.
+## Add your own memes
+
+Use images you made or have rights to: drop one in `assets/` and set `img: "assets/my-meme.png"` instead of `giphy`. Everything else is the same as the example above.

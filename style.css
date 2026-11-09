@@ -66,6 +66,7 @@ h1 { font-family: var(--display); font-weight: 400; font-size: clamp(52px, 12vw,
 .how li { counter-increment: s; display: flex; gap: 12px; align-items: center; }
 .how li::before { content: counter(s); font: 800 14px var(--mono); width: 28px; height: 28px; display: grid; place-items: center; background: var(--banana); color: var(--ink); border-radius: 50%; flex: none; }
 .fine { font-size: 13px; color: var(--muted); margin: 0; }
+.giphy { font: 800 11px var(--mono); letter-spacing: 0.08em; color: var(--paper); text-transform: uppercase; }
 
 /* Play */
 .play { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 28px; align-items: start; }
