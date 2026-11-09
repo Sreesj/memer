@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Meme Mirror</title>
+  <meta name="description" content="Recreate unhinged meme faces with your camera. Get scored on pose and emotion.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bowlby+One&family=Familjen+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@500;800&display=swap">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="bar">
+    <div class="logo">MEME<span>MIRROR</span></div>
+    <div class="hud" id="hud" hidden>
+      <span id="hudLevel">LVL 1/5</span>
+      <span id="hudScore">0 PTS</span>
+    </div>
+  </header>
+
+  <!-- TITLE -->
+  <section class="screen" id="screenTitle">
+    <div class="title-wrap">
+      <div class="title-stack">
+        <img class="sticker s1" src="assets/hmm-monkey.png" alt="">
+        <h1>Become<br>the meme.</h1>
+      </div>
+      <p class="lede">Five unhinged reaction images. Copy each one with your camera. We score how close your pose is and how much of the emotion you actually carried.</p>
+      <ol class="how">
+        <li><b>Study</b> the meme</li>
+        <li><b>Hit snap</b>. 3 seconds to get into character</li>
+        <li><b>Hold it</b>. We grab your best frame</li>
+      </ol>
+      <button class="btn big" id="btnStart">Turn on camera</button>
+      <p class="fine" id="startStatus">Everything runs in your browser. No photos leave your device.</p>
+      <p class="fine" id="bestEver"></p>
+    </div>
+  </section>
+
+  <!-- PLAY -->
+  <section class="screen" id="screenPlay" hidden>
+    <div class="play">
+      <article class="ref card">
+        <div class="ref-top">
+          <span class="chip" id="refNum">LEVEL 1</span>
+          <span class="chip ghost" id="refDots"></span>
+        </div>
+        <img id="refImg" alt="The meme to copy">
+        <h2 id="refName"></h2>
+        <p class="tag" id="refTag"></p>
+        <ul class="tips" id="refTips"></ul>
+      </article>
+
+      <div class="cam card">
+        <div class="cam-box">
+          <video id="video" playsinline muted></video>
+          <canvas id="overlay"></canvas>
+          <div class="count" id="count" hidden></div>
+          <div class="flash" id="flash"></div>
+          <div class="noface" id="noface" hidden>Can't find your face. Get in frame!</div>
+        </div>
+        <div class="meter">
+          <div class="meter-row"><span>POSE</span><div class="track"><i id="mPose"></i></div><b id="mPoseN">0</b></div>
+          <div class="meter-row"><span>EMOTION</span><div class="track"><i id="mEmo"></i></div><b id="mEmoN">0</b></div>
+        </div>
+        <div class="actions">
+          <button class="btn big" id="btnSnap">Snap <kbd>space</kbd></button>
+          <button class="btn ghost" id="btnSkip">Skip</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RESULT -->
+  <section class="screen" id="screenResult" hidden>
+    <div class="result">
+      <div class="duo">
+        <figure><img id="resRef" alt="Original meme"><figcaption>THE MEME</figcaption></figure>
+        <figure><img id="resYou" alt="Your attempt"><figcaption>YOU</figcaption></figure>
+      </div>
+      <div class="verdict card">
+        <div class="score-big"><span id="resScore">0</span><small>/100</small></div>
+        <p class="quip" id="resQuip"></p>
+        <div class="split">
+          <div><span>POSE</span><b id="resPose">0</b></div>
+          <div><span>EMOTION</span><b id="resEmo">0</b></div>
+        </div>
+        <ul class="breakdown" id="resBreak"></ul>
+        <div class="actions">
+          <button class="btn ghost" id="btnRetry">Retry</button>
+          <button class="btn big" id="btnNext">Next meme</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL -->
+  <section class="screen" id="screenFinal" hidden>
+    <div class="final">
+      <p class="eyebrow">FINAL SCORE</p>
+      <div class="final-score"><span id="finScore">0</span><small>/500</small></div>
+      <h2 id="finRank"></h2>
+      <canvas id="collage" width="1080" height="1440"></canvas>
+      <div class="actions">
+        <button class="btn big" id="btnDownload">Download card</button>
+        <button class="btn ghost" id="btnAgain">Play again</button>
+      </div>
+    </div>
+  </section>
+
+  <script type="module" src="game.js"></script>
+</body>
+</html>
