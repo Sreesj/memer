@@ -91,6 +91,9 @@ function startGame() {
 function loadLevel() {
   const L = LEVELS[S.level];
   $("#refImg").src = L.img;
+  const credit = $("#refCredit");
+  credit.hidden = !L.credit;
+  if (L.credit) { credit.textContent = L.credit.text; credit.href = L.credit.href; }
   $("#refNum").textContent = `LEVEL ${S.level + 1}`;
   $("#refDots").textContent = LEVELS.map((_, i) => (i < S.level ? "●" : i === S.level ? "◉" : "○")).join("");
   $("#refName").textContent = L.name;
@@ -342,7 +345,14 @@ async function showFinal() {
   await drawCollage(total);
 }
 
-const loadImg = src => new Promise(res => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = src; });
+// Remote GIFs need CORS to be drawn into the share card; if a host refuses, that tile shows blank instead of breaking the export.
+const loadImg = src => new Promise(res => {
+  const i = new Image();
+  if (/^https?:/.test(src)) i.crossOrigin = "anonymous";
+  i.onload = () => res(i);
+  i.onerror = () => res(null);
+  i.src = src;
+});
 
 async function drawCollage(total) {
   try { await document.fonts.ready; } catch {}

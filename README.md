@@ -44,6 +44,21 @@ Each level in `levels.js` is a list of checks. A check is a small function that 
 
 Pose and emotion are weighted averages of their checks; the level score is 50/50 of the two.
 
+## Use existing GIFs from GIPHY
+
+Find the meme on giphy.com, copy its page URL, and use the `giphy()` helper in `levels.js`:
+
+```js
+{
+  ...giphy("https://giphy.com/gifs/whatever-it-is-AbC123xyz"),   // or just the ID
+  id: "sideeye",
+  name: "The Side-Eye",
+  // tips, checks… as usual
+},
+```
+
+This loads the GIF from GIPHY's servers (nothing is copied into the repo) and shows a "via GIPHY" link on the card. Pass `{ still: true }` to use GIPHY's frozen first frame instead of the animation.
+
 ## Add your own memes
 
 Drop an image or GIF into `assets/` and add an entry to `LEVELS` in `levels.js`:

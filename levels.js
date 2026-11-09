@@ -9,6 +9,18 @@
 //  (GIFs work, but the game compares against one static frame.)
 // ─────────────────────────────────────────────────────────────
 
+// Use a GIF straight from GIPHY: paste the GIF's page URL or its ID.
+//   giphy("https://giphy.com/gifs/some-name-AbC123xyz")
+//   → { img, credit } — spread it into a level: { ...giphy("..."), name: ... }
+// still: true uses GIPHY's first-frame still instead of the animation.
+export const giphy = (urlOrId, { still = false } = {}) => {
+  const id = String(urlOrId).split(/[/?#]/).filter(Boolean).pop().split("-").pop();
+  return {
+    img: `https://media.giphy.com/media/${id}/${still ? "giphy_s.gif" : "giphy.gif"}`,
+    credit: { text: "via GIPHY", href: `https://giphy.com/gifs/${id}` },
+  };
+};
+
 const INK = "#1a0b2e";
 const SKIN = "#f2c48d";
 
