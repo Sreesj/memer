@@ -90,7 +90,7 @@ function startGame() {
 
 function loadLevel() {
   const L = LEVELS[S.level];
-  $("#refImg").src = L.img;
+  $("#refImg").src = L.gif || L.img;
   const credit = $("#refCredit");
   credit.hidden = !L.credit;
   if (L.credit) { credit.textContent = L.credit.text; credit.href = L.credit.href; }

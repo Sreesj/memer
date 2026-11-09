@@ -47,6 +47,7 @@ const SIDE_EYE = svg(
   <path d="M78 150 Q100 146 122 149" fill="none" stroke="${INK}" stroke-width="6" stroke-linecap="round"/>`
 );
 
+// Cartoon fallbacks (unused while the GIF versions are in place)
 const SCREAM = svg(
   "#ff8a5b",
   `${head}
@@ -129,7 +130,9 @@ export const LEVELS = [
     id: "scream",
     name: "Internal Screaming",
     tagline: "You just saw your screen time report.",
-    img: SCREAM,
+    img: "assets/gifs/home-alone-scream-still.jpg",
+    gif: "assets/gifs/home-alone-scream.gif",
+    credit: { text: "GIF via GIPHY", href: "https://giphy.com/gifs/homealone-90s-home-alone-d2YWTOsVtuHgOHhC" },
     tips: ["Both palms flat on your cheeks", "Mouth open as WIDE as it goes", "Eyebrows to the ceiling", "Eyes huge"],
     checks: [
       { kind: "pose", label: "Hands on both cheeks", w: 4,
@@ -152,19 +155,21 @@ export const LEVELS = [
     id: "bigbrain",
     name: "Big Brain Smirk",
     tagline: "You just thought of the worst possible idea and you love it.",
-    img: BIG_BRAIN,
-    tips: ["One finger tapping your temple", "Tilt your head", "ONE eyebrow up", "Lopsided smirk, squinty eyes"],
+    img: "assets/gifs/temple-tap-still.jpg",
+    gif: "assets/gifs/temple-tap.gif",
+    credit: { text: "GIF via GIPHY", href: "https://giphy.com/gifs/draftkings-roll-safe-you-see-tapping-head-LqghYqYPnGt65WpMI1" },
+    tips: ["One finger tapping your temple", "Tilt your head", "Smug, lopsided smile", "Squint like you're a genius"],
     checks: [
       { kind: "pose", label: "Finger on temple", w: 3, fn: h => h.near(h.handTo([8, 7, 12], TEMPLES), 0.14, 0.5) },
       { kind: "pose", label: "Head tilt", w: 1, fn: h => h.ramp(Math.abs(h.roll()), 4, 14) },
-      { kind: "emotion", label: "One eyebrow raised", w: 2,
+      { kind: "emotion", label: "One eyebrow raised", w: 0.75,
         fn: h => h.ramp(Math.abs((h.bs("browOuterUpLeft") - h.bs("browDownLeft")) - (h.bs("browOuterUpRight") - h.bs("browDownRight"))), 0.12, 0.5) },
-      { kind: "emotion", label: "Lopsided smirk", w: 2,
+      { kind: "emotion", label: "Smug smirk", w: 2.5,
         fn: h => {
           const l = h.bs("mouthSmileLeft"), r = h.bs("mouthSmileRight");
           return 0.5 * h.ramp(Math.max(l, r), 0.12, 0.5) + 0.5 * h.ramp(Math.abs(l - r), 0.06, 0.3);
         } },
-      { kind: "emotion", label: "Scheming squint", w: 1, fn: h => h.ramp(h.avg2("eyeSquintLeft", "eyeSquintRight"), 0.1, 0.45) },
+      { kind: "emotion", label: "Scheming squint", w: 1.5, fn: h => h.ramp(h.avg2("eyeSquintLeft", "eyeSquintRight"), 0.1, 0.45) },
     ],
   },
   {

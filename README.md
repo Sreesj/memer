@@ -15,8 +15,8 @@ At the end you get a total out of 500, a rank, and a downloadable side-by-side c
 |---|------|----------------|
 | 1 | The Hmm Monkey | hand on chin, pursed lips, suspicious eyes, no smile |
 | 2 | The Side-Eye | head forward, eyes to one side, pressed lips, judgy brows |
-| 3 | Internal Screaming | both palms on cheeks, jaw wide open, brows up, eyes wide |
-| 4 | Big Brain Smirk | finger on temple, head tilt, one eyebrow up, lopsided smirk |
+| 3 | Internal Screaming (Home Alone GIF) | both palms on cheeks, jaw wide open, brows up, eyes wide |
+| 4 | Big Brain Smirk (temple-tap GIF) | finger on temple, head tilt, smug smirk, squint |
 | 5 | Facepalm of Shame | palm over forehead, eyes closed, defeated mouth |
 
 ## Run it
@@ -43,6 +43,24 @@ Each level in `levels.js` is a list of checks. A check is a small function that 
 - `h.near(d, good, bad)` and `h.ramp(v, lo, hi)`: turn raw numbers into 0–1
 
 Pose and emotion are weighted averages of their checks; the level score is 50/50 of the two.
+
+## Stored GIFs
+
+`assets/gifs/` holds downloaded GIFs plus one still frame from each. The level card plays the GIF; scoring compares against the still pose, and the share card uses the still.
+
+| File | Source |
+|------|--------|
+| `home-alone-scream.gif` | [GIPHY d2YWTOsVtuHgOHhC](https://giphy.com/gifs/homealone-90s-home-alone-d2YWTOsVtuHgOHhC) |
+| `temple-tap.gif` | [GIPHY LqghYqYPnGt65WpMI1](https://giphy.com/gifs/draftkings-roll-safe-you-see-tapping-head-LqghYqYPnGt65WpMI1) |
+
+These clips belong to their rights holders. Fine for a private repo or playing with friends; think twice before publishing them on a public site.
+
+To add a stored GIF to a level, set `gif:` (what the card plays) and `img:` (the still frame used for scoring):
+
+```js
+img: "assets/gifs/my-meme-still.jpg",
+gif: "assets/gifs/my-meme.gif",
+```
 
 ## Use existing GIFs from GIPHY
 
